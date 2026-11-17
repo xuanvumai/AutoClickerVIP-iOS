@@ -2,7 +2,7 @@
 name: AutoClickerVIP
 
 options:
-  bundleIdPrefix: com.autoclickervip
+  bundleIdPrefix: com.xuanvumai
   deploymentTarget:
     iOS: "16.0"
 
@@ -12,18 +12,13 @@ targets:
     platform: iOS
 
     sources:
-      - AutoClickerVIP
+      - path: Sources
 
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.autoclickervip.ios
+        PRODUCT_BUNDLE_IDENTIFIER: com.xuanvumai.autoclickervip
         PRODUCT_NAME: AutoClickerVIP
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Auto Clicker VIP
-        INFOPLIST_KEY_LSApplicationQueriesSchemes:
-          - snssdk1233
-          - fb
-          - youtube
-          - instagram
