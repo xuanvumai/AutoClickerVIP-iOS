@@ -1,30 +1,52 @@
 
-name: Build Auto Clicker VIP
+name: AutoClickerVIP iOS Build
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
+    paths:
+      - "AutoClickerVIP/**"
+      - "project.yml"
+      - ".github/workflows/build-ipa.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autoclicker-ios-build
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: macos-15
+    name: Build AutoClick VIP
+    runs-on: macos-15-intel
+    timeout-minutes: 45
 
     steps:
-      - name: Checkout GitHub repository
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
+      - name: Check source files
+        run: |
+          test -f project.yml
+          test -f AutoClickerVIP/ContentView.swift
+          echo "Source files OK"
+
+      - name: Select Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: |
+          brew install xcodegen
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: |
+          xcodegen generate
+          test -d AutoClickerVIP.xcodeproj
 
       - name: Build iOS app
         run: |
@@ -34,10 +56,32 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
-      - name: Upload build
+      - name: Package unsigned IPA
+        run: |
+          APP="build/Build/Products/Release-iphoneos/AutoClickerVIP.app"
+
+          test -d "$APP"
+
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+
+          ditto "$APP" \
+            "$RUNNER_TEMP/ipa/Payload/AutoClickerVIP.app"
+
+          cd "$RUNNER_TEMP/ipa"
+
+          zip -qry \
+            "$GITHUB_WORKSPACE/AutoClickerVIP-unsigned.ipa" \
+            Payload
+
+          test -s "$GITHUB_WORKSPACE/AutoClickerVIP-unsigned.ipa"
+
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AutoClickerVIP-Build
-          path: build/Build/Products/Release-iphoneos/
+          name: AutoClickerVIP-iOS-IPA
+          path: AutoClickerVIP-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
