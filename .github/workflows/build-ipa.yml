@@ -1,0 +1,40 @@
+
+name: Build Auto Clicker IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build iOS app
+        run: |
+          xcodebuild \
+            -project AutoClickerVIP.xcodeproj \
+            -scheme AutoClickerVIP \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Save build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoClickerVIP-iOS-Build
+          path: build/Build/Products/Release-iphoneos/
