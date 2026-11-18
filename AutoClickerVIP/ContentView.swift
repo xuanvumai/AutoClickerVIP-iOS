@@ -6,28 +6,33 @@ struct ContentView: View {
     @State private var clickCount = 0
     @State private var clickLimit = 0
     @State private var interval = 100
-    @State private var fastMode = true
+    @State private var fastMode = false
     @State private var repeatMode = false
-    @State private var clickTask: Task<Void, Never>?
+    @State private var timer: Timer?
 
-    private let purple = Color(red: 0.55, green: 0.15, blue: 1.0)
+    private let purple = Color(
+        red: 0.65,
+        green: 0.15,
+        blue: 1.0
+    )
 
     var body: some View {
         ZStack {
-            Color(red: 0.035, green: 0.025, blue: 0.09)
+            Color(red: 0.035, green: 0.02, blue: 0.08)
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 22) {
                     header
-                    statusCard
-                    settingsCard
-                    advancedCard
+                    statusPanel
+                    settingsPanel
+                    advancedPanel
+                    statisticsPanel
 
-                    Text("AutoClickerVIP • Version 1.0.0")
+                    Text("AUTOCLICK VIP • VERSION 1.0")
                         .font(.caption)
                         .foregroundStyle(.gray)
-                        .padding(.bottom, 20)
+                        .padding(.top, 12)
                 }
                 .padding()
             }
@@ -39,31 +44,36 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 14) {
+        HStack {
             Image(systemName: "hand.tap.fill")
-                .font(.system(size: 38))
+                .font(.system(size: 40))
                 .foregroundStyle(purple)
 
             VStack(alignment: .leading) {
-                Text("AutoClick Pro")
+                Text("AutoClick VIP")
                     .font(.system(size: 27, weight: .bold))
                     .foregroundStyle(.white)
 
-                Text("Click tự động - VIP")
+                Text("Click tự động - Phiên bản VIP")
+                    .font(.caption)
                     .foregroundStyle(.purple)
             }
 
             Spacer()
+
+            Image(systemName: "crown.fill")
+                .font(.system(size: 27))
+                .foregroundStyle(.yellow)
         }
-        .padding(.vertical, 15)
+        .padding(.vertical)
     }
 
-    private var statusCard: some View {
+    private var statusPanel: some View {
         VStack(spacing: 18) {
             HStack {
                 Circle()
                     .fill(isRunning ? .green : .orange)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 12, height: 12)
 
                 Text(isRunning ? "Đang chạy" : "Đã tạm dừng")
                     .font(.headline)
@@ -72,32 +82,29 @@ struct ContentView: View {
 
                 Text("\(clickCount) Click")
                     .foregroundStyle(.purple)
-                    .bold()
             }
 
             Button {
-                isRunning ? stopClicking() : startClicking()
-            } label: {
-                HStack {
-                    Image(systemName: isRunning ? "pause.fill" : "play.fill")
-                    Text(isRunning ? "Tạm dừng" : "Bắt đầu")
+                if isRunning {
+                    stopClicking()
+                } else {
+                    startClicking()
                 }
+            } label: {
+                Label(
+                    isRunning ? "Tạm dừng" : "Bắt đầu",
+                    systemImage: isRunning ? "pause.fill" : "play.fill"
+                )
                 .font(.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(
-                    LinearGradient(
-                        colors: [purple, .purple],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .background(purple)
+                .clipShape(RoundedRectangle(cornerRadius: 15))
             }
         }
         .padding()
-        .background(Color.white.opacity(0.07))
+        .background(.white.opacity(0.07))
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay {
             RoundedRectangle(cornerRadius: 20)
@@ -105,30 +112,43 @@ struct ContentView: View {
         }
     }
 
-    private var settingsCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
+    private var settingsPanel: some View {
+        VStack(alignment: .leading, spacing: 20) {
             Label("Cài đặt Click", systemImage: "scope")
                 .font(.title3.bold())
                 .foregroundStyle(.purple)
 
             VStack(alignment: .leading) {
-                Text("Số lần Click (0 = vô hạn)")
-                Stepper("\(clickLimit)", value: $clickLimit, in: 0...100000)
+                Text("Số lần Click")
+                Text("0 = Không giới hạn")
+                    .font(.caption)
+                    .foregroundStyle(.gray)
+
+                Stepper(
+                    "\(clickLimit)",
+                    value: $clickLimit,
+                    in: 0...100000
+                )
             }
 
             Divider()
 
             VStack(alignment: .leading) {
-                Text("Thời gian giữa hai lần Click")
-                Stepper("\(interval) ms", value: $interval, in: 10...5000, step: 10)
+                Text("Khoảng cách giữa các lần Click")
+                Stepper(
+                    "\(interval) ms",
+                    value: $interval,
+                    in: 10...5000,
+                    step: 10
+                )
             }
         }
         .padding()
-        .background(Color.white.opacity(0.07))
+        .background(.white.opacity(0.07))
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
-    private var advancedCard: some View {
+    private var advancedPanel: some View {
         VStack(alignment: .leading, spacing: 18) {
             Label("Tính năng nâng cao", systemImage: "bolt.fill")
                 .font(.title3.bold())
@@ -140,15 +160,52 @@ struct ContentView: View {
             Toggle("Lặp lại tự động", isOn: $repeatMode)
                 .tint(purple)
 
-            Divider()
-
             Button("Đặt lại thống kê") {
+                stopClicking()
                 clickCount = 0
             }
             .foregroundStyle(.purple)
         }
         .padding()
-        .background(Color.white.opacity(0.07))
+        .background(.white.opacity(0.07))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var statisticsPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Thống kê", systemImage: "chart.bar.fill")
+                .font(.title3.bold())
+                .foregroundStyle(.purple)
+
+            HStack {
+                Spacer()
+
+                VStack {
+                    Text("\(clickCount)")
+                        .font(.title.bold())
+                        .foregroundStyle(.purple)
+
+                    Text("Tổng Click")
+                        .font(.caption)
+                }
+
+                Spacer()
+
+                VStack {
+                    Image(systemName: "timer")
+                        .font(.title)
+                        .foregroundStyle(.purple)
+
+                    Text("\(interval) ms")
+                        .font(.caption)
+                }
+
+                Spacer()
+            }
+            .padding(.vertical)
+        }
+        .padding()
+        .background(.white.opacity(0.07))
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
@@ -157,35 +214,27 @@ struct ContentView: View {
 
         isRunning = true
 
-        clickTask = Task {
-            while !Task.isCancelled {
-                let delay = fastMode ? min(interval, 50) : interval
+        let delay = fastMode ? min(interval, 50) : interval
 
-                try? await Task.sleep(
-                    nanoseconds: UInt64(delay) * 1_000_000
-                )
+        timer = Timer.scheduledTimer(
+            withTimeInterval: Double(delay) / 1000.0,
+            repeats: true
+        ) { _ in
+            clickCount += 1
 
-                if Task.isCancelled { break }
-
-                clickCount += 1
-
-                if clickLimit > 0 && clickCount >= clickLimit {
-                    if repeatMode {
-                        clickCount = 0
-                    } else {
-                        break
-                    }
+            if clickLimit > 0 && clickCount >= clickLimit {
+                if repeatMode {
+                    clickCount = 0
+                } else {
+                    stopClicking()
                 }
             }
-
-            isRunning = false
-            clickTask = nil
         }
     }
 
     private func stopClicking() {
-        clickTask?.cancel()
-        clickTask = nil
+        timer?.invalidate()
+        timer = nil
         isRunning = false
     }
 }
