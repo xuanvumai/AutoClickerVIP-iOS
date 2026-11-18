@@ -1,28 +1,27 @@
 
-# AutoClickerVIP iOS
+# AutoClick VIP iOS
 
-AutoClick VIP - iOS application.
-
-## Features
-
-- SwiftUI interface
-- Click counter
-- Click interval settings
-- Repeat mode
-- Statistics
-
-## Build
-
-Open GitHub Actions.
-
-Select Xay dung AutoClick VIP.
-
-Click Run workflow.
-
-Download AutoClickerVIP-IPA from Artifacts.
+SwiftUI AutoClick VIP.
 
 ## Requirements
-
+- iOS 16+
 - Xcode
 - XcodeGen
-- iOS 16+
+
+## Generate
+xcodegen generate
+
+## Build
+xcodebuild \
+  -project AutoClickerVIP.xcodeproj \
+  -scheme AutoClickerVIP \
+  -configuration Release \
+  -sdk iphoneos \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+
+## GitHub Actions
+Open Actions and select:
+AutoClickerVIP iOS Build
+
+Run workflow and download the IPA artifact.
