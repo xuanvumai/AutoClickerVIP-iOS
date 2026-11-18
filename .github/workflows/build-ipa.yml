@@ -1,87 +1,85 @@
 
-name: AutoClickerVIP iOS Build
+name: Xay dung AutoClick VIP
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths:
-      - "AutoClickerVIP/**"
-      - "project.yml"
-      - ".github/workflows/build-ipa.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: autoclicker-ios-build
+  group: autoclickervip-build
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build AutoClick VIP
-    runs-on: macos-15-intel
+    name: Build iOS app
+    runs-on: macos-15
     timeout-minutes: 45
 
     steps:
-      - name: Checkout source
+      - name: Lay ma nguon
         uses: actions/checkout@v4
 
-      - name: Check source files
+      - name: Kiem tra file
         run: |
           test -f project.yml
+          test -f AutoClickerVIP/AutoClickerVIPApp.swift
           test -f AutoClickerVIP/ContentView.swift
-          echo "Source files OK"
 
-      - name: Select Xcode
+      - name: Kiem tra Xcode
         run: |
-          xcode-select -p
           xcodebuild -version
+          xcode-select -p
 
-      - name: Install XcodeGen
+      - name: Cai XcodeGen
         run: |
           brew install xcodegen
 
-      - name: Generate Xcode project
+      - name: Tao project Xcode
         run: |
           xcodegen generate
           test -d AutoClickerVIP.xcodeproj
 
-      - name: Build iOS app
+      - name: Kiem tra scheme
+        run: |
+          xcodebuild \
+            -list \
+            -project AutoClickerVIP.xcodeproj
+
+      - name: Build iOS
         run: |
           xcodebuild \
             -project AutoClickerVIP.xcodeproj \
             -scheme AutoClickerVIP \
             -configuration Release \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Package unsigned IPA
+      - name: Dong goi IPA
         run: |
           APP="build/Build/Products/Release-iphoneos/AutoClickerVIP.app"
 
           test -d "$APP"
 
-          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          mkdir -p Payload
 
-          ditto "$APP" \
-            "$RUNNER_TEMP/ipa/Payload/AutoClickerVIP.app"
+          ditto "$APP" Payload/AutoClickerVIP.app
 
-          cd "$RUNNER_TEMP/ipa"
+          zip -qry AutoClickerVIP.ipa Payload
 
-          zip -qry \
-            "$GITHUB_WORKSPACE/AutoClickerVIP-unsigned.ipa" \
-            Payload
+          test -s AutoClickerVIP.ipa
 
-          test -s "$GITHUB_WORKSPACE/AutoClickerVIP-unsigned.ipa"
-
-      - name: Upload IPA artifact
+      - name: Tai len IPA
         uses: actions/upload-artifact@v4
         with:
-          name: AutoClickerVIP-iOS-IPA
-          path: AutoClickerVIP-unsigned.ipa
+          name: AutoClickerVIP-IPA
+          path: AutoClickerVIP.ipa
           if-no-files-found: error
           retention-days: 7
