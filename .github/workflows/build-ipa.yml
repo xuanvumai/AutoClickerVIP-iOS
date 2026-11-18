@@ -7,41 +7,19 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-
-concurrency:
-  group: autoclickervip-build
-  cancel-in-progress: true
-
 jobs:
   build:
-    name: Build AutoClick VIP
     runs-on: macos-15
-    timeout-minutes: 45
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v7
-
-      - name: Check Swift files
-        run: |
-          test -f project.yml
-          test -f AutoClickerVIP/AutoClickerVIPApp.swift
-          test -f AutoClickerVIP/ContentView.swift
-
-      - name: Check Xcode
-        run: |
-          xcodebuild -version
-          swift --version
+      - name: Checkout
+        uses: actions/checkout@v5
 
       - name: Install XcodeGen
-        run: |
-          brew install xcodegen
+        run: brew install xcodegen
 
-      - name: Generate project
-        run: |
-          xcodegen generate
+      - name: Generate Xcode project
+        run: xcodegen generate
 
       - name: Build iOS app
         run: |
@@ -50,28 +28,19 @@ jobs:
             -scheme AutoClickerVIP \
             -configuration Release \
             -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
 
       - name: Package IPA
         run: |
-          APP="build/Build/Products/Release-iphoneos/AutoClickerVIP.app"
-
-          test -d "$APP"
-
           mkdir -p Payload
-          ditto "$APP" Payload/AutoClickerVIP.app
-
-          zip -qry AutoClickerVIP.ipa Payload
-
-          test -s AutoClickerVIP.ipa
+          cp -R build/Build/Products/Release-iphoneos/AutoClickerVIP.app Payload/
+          zip -r AutoClickVIP.ipa Payload
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
-          name: AutoClickerVIP-IPA
-          path: AutoClickerVIP.ipa
+          name: AutoClickVIP-iOS
+          path: AutoClickVIP.ipa
           if-no-files-found: error
-          retention-days: 7
