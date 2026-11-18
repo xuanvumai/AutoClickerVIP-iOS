@@ -2,39 +2,66 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var isExpanded = true
     @State private var isRunning = false
     @State private var clickCount = 0
     @State private var clickLimit = 0
     @State private var interval = 100
-    @State private var fastMode = false
-    @State private var repeatMode = false
+    @State private var position = CGSize.zero
     @State private var timer: Timer?
 
     private let purple = Color(
-        red: 0.65,
-        green: 0.15,
+        red: 0.58,
+        green: 0.16,
         blue: 1.0
     )
 
     var body: some View {
-        ZStack {
-            Color(red: 0.035, green: 0.02, blue: 0.08)
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                Color(red: 0.035, green: 0.02, blue: 0.08)
+                    .ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 22) {
-                    header
-                    statusPanel
-                    settingsPanel
-                    advancedPanel
-                    statisticsPanel
+                VStack(spacing: 20) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 42))
+                        .foregroundStyle(.yellow)
 
-                    Text("AUTOCLICK VIP • VERSION 1.0")
+                    Text("AUTOCLICK VIP")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(.white)
+
+                    Text("Floating Control Menu")
+                        .foregroundStyle(.purple)
+
+                    Spacer()
+
+                    floatingMenu
+
+                    Spacer()
+
+                    Text("Menu nổi trong ứng dụng")
                         .font(.caption)
                         .foregroundStyle(.gray)
-                        .padding(.top, 12)
                 }
                 .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .overlay(alignment: .topLeading) {
+                floatingMenu
+                    .fixedSize()
+                    .offset(position)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                position = CGSize(
+                                    width: value.translation.width,
+                                    height: value.translation.height
+                                )
+                            }
+                    )
+                    .padding(.top, 15)
+                    .padding(.leading, 10)
             }
         }
         .preferredColorScheme(.dark)
@@ -43,170 +70,114 @@ struct ContentView: View {
         }
     }
 
-    private var header: some View {
-        HStack {
-            Image(systemName: "hand.tap.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(purple)
+    @ViewBuilder
+    private var floatingMenu: some View {
+        if isExpanded {
+            VStack(spacing: 14) {
+                HStack {
+                    Image(systemName: "crown.fill")
+                        .foregroundStyle(.yellow)
 
-            VStack(alignment: .leading) {
-                Text("AutoClick VIP")
-                    .font(.system(size: 27, weight: .bold))
-                    .foregroundStyle(.white)
+                    Text("AUTOCLICK VIP")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
 
-                Text("Click tự động - Phiên bản VIP")
-                    .font(.caption)
-                    .foregroundStyle(.purple)
-            }
+                    Spacer()
 
-            Spacer()
+                    Button {
+                        isExpanded = false
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundStyle(.white)
+                    }
+                }
 
-            Image(systemName: "crown.fill")
-                .font(.system(size: 27))
-                .foregroundStyle(.yellow)
-        }
-        .padding(.vertical)
-    }
+                Divider().overlay(.purple)
 
-    private var statusPanel: some View {
-        VStack(spacing: 18) {
-            HStack {
-                Circle()
-                    .fill(isRunning ? .green : .orange)
-                    .frame(width: 12, height: 12)
+                HStack {
+                    Circle()
+                        .fill(isRunning ? .green : .orange)
+                        .frame(width: 9, height: 9)
 
-                Text(isRunning ? "Đang chạy" : "Đã tạm dừng")
+                    Text(isRunning ? "ĐANG CHẠY" : "ĐANG DỪNG")
+                        .font(.caption.bold())
+
+                    Spacer()
+
+                    Text("\(clickCount) Click")
+                        .foregroundStyle(.purple)
+                }
+
+                Button {
+                    isRunning ? stopClicking() : startClicking()
+                } label: {
+                    Label(
+                        isRunning ? "TẠM DỪNG" : "BẮT ĐẦU",
+                        systemImage: isRunning ? "pause.fill" : "play.fill"
+                    )
                     .font(.headline)
-
-                Spacer()
-
-                Text("\(clickCount) Click")
-                    .foregroundStyle(.purple)
-            }
-
-            Button {
-                if isRunning {
-                    stopClicking()
-                } else {
-                    startClicking()
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(12)
+                    .background(purple)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-            } label: {
-                Label(
-                    isRunning ? "Tạm dừng" : "Bắt đầu",
-                    systemImage: isRunning ? "pause.fill" : "play.fill"
-                )
-                .font(.headline)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("SỐ LẦN CLICK: \(clickLimit)")
+                    Stepper(
+                        "Giới hạn",
+                        value: $clickLimit,
+                        in: 0...10000
+                    )
+
+                    Divider()
+
+                    Text("TỐC ĐỘ: \(interval) ms")
+                    Stepper(
+                        "Điều chỉnh tốc độ",
+                        value: $interval,
+                        in: 10...5000,
+                        step: 10
+                    )
+                }
+                .font(.caption)
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(purple)
-                .clipShape(RoundedRectangle(cornerRadius: 15))
             }
-        }
-        .padding()
-        .background(.white.opacity(0.07))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay {
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(purple.opacity(0.7), lineWidth: 1)
-        }
-    }
-
-    private var settingsPanel: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Label("Cài đặt Click", systemImage: "scope")
-                .font(.title3.bold())
-                .foregroundStyle(.purple)
-
-            VStack(alignment: .leading) {
-                Text("Số lần Click")
-                Text("0 = Không giới hạn")
-                    .font(.caption)
-                    .foregroundStyle(.gray)
-
-                Stepper(
-                    "\(clickLimit)",
-                    value: $clickLimit,
-                    in: 0...100000
+            .padding(16)
+            .frame(width: 275)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.12, green: 0.05, blue: 0.23),
+                        Color.black
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(purple, lineWidth: 1.5)
             }
-
-            Divider()
-
-            VStack(alignment: .leading) {
-                Text("Khoảng cách giữa các lần Click")
-                Stepper(
-                    "\(interval) ms",
-                    value: $interval,
-                    in: 10...5000,
-                    step: 10
-                )
+            .shadow(color: purple.opacity(0.5), radius: 15)
+        } else {
+            Button {
+                isExpanded = true
+            } label: {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 27))
+                    .foregroundStyle(.white)
+                    .frame(width: 62, height: 62)
+                    .background(purple)
+                    .clipShape(Circle())
+                    .overlay {
+                        Circle().stroke(.white.opacity(0.7), lineWidth: 1)
+                    }
+                    .shadow(color: purple.opacity(0.7), radius: 12)
             }
         }
-        .padding()
-        .background(.white.opacity(0.07))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-    }
-
-    private var advancedPanel: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Label("Tính năng nâng cao", systemImage: "bolt.fill")
-                .font(.title3.bold())
-                .foregroundStyle(.purple)
-
-            Toggle("Click nhanh", isOn: $fastMode)
-                .tint(purple)
-
-            Toggle("Lặp lại tự động", isOn: $repeatMode)
-                .tint(purple)
-
-            Button("Đặt lại thống kê") {
-                stopClicking()
-                clickCount = 0
-            }
-            .foregroundStyle(.purple)
-        }
-        .padding()
-        .background(.white.opacity(0.07))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-    }
-
-    private var statisticsPanel: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Thống kê", systemImage: "chart.bar.fill")
-                .font(.title3.bold())
-                .foregroundStyle(.purple)
-
-            HStack {
-                Spacer()
-
-                VStack {
-                    Text("\(clickCount)")
-                        .font(.title.bold())
-                        .foregroundStyle(.purple)
-
-                    Text("Tổng Click")
-                        .font(.caption)
-                }
-
-                Spacer()
-
-                VStack {
-                    Image(systemName: "timer")
-                        .font(.title)
-                        .foregroundStyle(.purple)
-
-                    Text("\(interval) ms")
-                        .font(.caption)
-                }
-
-                Spacer()
-            }
-            .padding(.vertical)
-        }
-        .padding()
-        .background(.white.opacity(0.07))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
     private func startClicking() {
@@ -214,20 +185,14 @@ struct ContentView: View {
 
         isRunning = true
 
-        let delay = fastMode ? min(interval, 50) : interval
-
         timer = Timer.scheduledTimer(
-            withTimeInterval: Double(delay) / 1000.0,
+            withTimeInterval: Double(interval) / 1000,
             repeats: true
         ) { _ in
             clickCount += 1
 
             if clickLimit > 0 && clickCount >= clickLimit {
-                if repeatMode {
-                    clickCount = 0
-                } else {
-                    stopClicking()
-                }
+                stopClicking()
             }
         }
     }
