@@ -1,17 +1,20 @@
 
 # AutoClick VIP iOS
 
-SwiftUI AutoClick VIP.
+AutoClick VIP built with SwiftUI.
 
 ## Requirements
+
 - iOS 16+
 - Xcode
 - XcodeGen
 
-## Generate
+## Generate Xcode project
+
 xcodegen generate
 
 ## Build
+
 xcodebuild \
   -project AutoClickerVIP.xcodeproj \
   -scheme AutoClickerVIP \
@@ -21,7 +24,9 @@ xcodebuild \
   build
 
 ## GitHub Actions
-Open Actions and select:
-AutoClickerVIP iOS Build
 
-Run workflow and download the IPA artifact.
+1. Open Actions.
+2. Select AutoClick VIP iOS Build.
+3. Select Run workflow.
+4. Wait for build completion.
+5. Download AutoClickVIP-iOS artifact.
