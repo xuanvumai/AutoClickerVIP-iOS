@@ -1,5 +1,5 @@
 
-name: Xay dung AutoClick VIP
+name: AutoClickerVIP iOS Build
 
 on:
   workflow_dispatch:
@@ -16,41 +16,34 @@ concurrency:
 
 jobs:
   build:
-    name: Build iOS app
+    name: Build AutoClick VIP
     runs-on: macos-15
     timeout-minutes: 45
 
     steps:
-      - name: Lay ma nguon
-        uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v7
 
-      - name: Kiem tra file
+      - name: Check Swift files
         run: |
           test -f project.yml
           test -f AutoClickerVIP/AutoClickerVIPApp.swift
           test -f AutoClickerVIP/ContentView.swift
 
-      - name: Kiem tra Xcode
+      - name: Check Xcode
         run: |
           xcodebuild -version
-          xcode-select -p
+          swift --version
 
-      - name: Cai XcodeGen
+      - name: Install XcodeGen
         run: |
           brew install xcodegen
 
-      - name: Tao project Xcode
+      - name: Generate project
         run: |
           xcodegen generate
-          test -d AutoClickerVIP.xcodeproj
 
-      - name: Kiem tra scheme
-        run: |
-          xcodebuild \
-            -list \
-            -project AutoClickerVIP.xcodeproj
-
-      - name: Build iOS
+      - name: Build iOS app
         run: |
           xcodebuild \
             -project AutoClickerVIP.xcodeproj \
@@ -62,22 +55,21 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Dong goi IPA
+      - name: Package IPA
         run: |
           APP="build/Build/Products/Release-iphoneos/AutoClickerVIP.app"
 
           test -d "$APP"
 
           mkdir -p Payload
-
           ditto "$APP" Payload/AutoClickerVIP.app
 
           zip -qry AutoClickerVIP.ipa Payload
 
           test -s AutoClickerVIP.ipa
 
-      - name: Tai len IPA
-        uses: actions/upload-artifact@v4
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7
         with:
           name: AutoClickerVIP-IPA
           path: AutoClickerVIP.ipa
